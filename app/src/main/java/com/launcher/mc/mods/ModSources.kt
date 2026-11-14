@@ -59,12 +59,12 @@ object ModSources {
             if (depth > 4 || !seen.add(id)) return
             val f = latestFile(src, id, mc, loader)
             val target = dir.resolve(f.name)
-            log("Descargando \${f.name}")
+            log("Descargando ${f.name}")
             com.launcher.mc.core.Net.download(f.url, target)
             f.sha1?.let { want ->
                 if (!sha1(target).equals(want, ignoreCase = true)) {
                     target.delete()
-                    error("Archivo corrupto: \${f.name}")
+                    error("Archivo corrupto: ${f.name}")
                 }
             }
             done += f.name
@@ -85,7 +85,7 @@ object ModSources {
 
     private fun modrinthSearch(q: String, mc: String, loader: String): List<ModHit> {
         val facets = """[["project_type:mod"],["versions:$mc"],["categories:$loader"]]"""
-        val url = "https://api.modrinth.com/v2/search?limit=20&query=\${enc(q)}&facets=\${enc(facets)}"
+        val url = "https://api.modrinth.com/v2/search?limit=20&query=${enc(q)}&facets=${enc(facets)}"
         return Net.json(url).getJSONArray("hits").objects().map { h ->
             ModHit(
                 source = Source.MODRINTH,
@@ -101,7 +101,7 @@ object ModSources {
 
     private fun modrinthFile(id: String, mc: String, loader: String): ModFile {
         val url = "https://api.modrinth.com/v2/project/$id/version" +
-            "?loaders=\${enc("[\\"$loader\\"]")}&game_versions=\${enc("[\\"$mc\\"]")}"
+            "?loaders=${enc("[\"$loader\"]")}&game_versions=${enc("[\"$mc\"]")}"
         val v = JSONArray(Net.get(url)).objects().firstOrNull()
             ?: error("Sin versión de $mc para $loader")
         val files = v.getJSONArray("files").objects()
@@ -137,7 +137,7 @@ object ModSources {
 
     private fun curseSearch(q: String, mc: String, loader: String): List<ModHit> {
         val url = "https://api.curseforge.com/v1/mods/search?gameId=432&classId=6" +
-            "&gameVersion=$mc&modLoaderType=\${loaderType(loader)}&searchFilter=\${enc(q)}" +
+            "&gameVersion=$mc&modLoaderType=${loaderType(loader)}&searchFilter=${enc(q)}" +
             "&sortField=2&sortOrder=desc&pageSize=20"
         return Net.json(url, curseHeaders()).getJSONArray("data").objects().map { m ->
             ModHit(
@@ -154,7 +154,7 @@ object ModSources {
 
     private fun curseFile(modId: String, mc: String, loader: String): ModFile {
         val url = "https://api.curseforge.com/v1/mods/$modId/files" +
-            "?gameVersion=$mc&modLoaderType=\${loaderType(loader)}&pageSize=5"
+            "?gameVersion=$mc&modLoaderType=${loaderType(loader)}&pageSize=5"
         val f = Net.json(url, curseHeaders()).getJSONArray("data").objects().firstOrNull()
             ?: error("Sin archivo de $mc para $loader")
 
@@ -162,7 +162,7 @@ object ModSources {
         val name = f.getString("fileName")
         // Si el autor desactivó la descarga por API, downloadUrl es null: se usa el CDN directamente
         val dl = if (f.isNull("downloadUrl")) {
-            "https://edge.forgecdn.net/files/\${fileId / 1000}/\${fileId % 1000}/$name"
+            "https://edge.forgecdn.net/files/${fileId / 1000}/${fileId % 1000}/$name"
         } else {
             f.getString("downloadUrl")
         }
